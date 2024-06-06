@@ -75,9 +75,41 @@ const QuizGame = () => {
             
         }   catch (error) {
             console.error('could not fetch Quiz data', error);
+            backupFetch();
         }
         
     }
+
+    async function backupFetch(){
+        console.log("firing backup")
+        try {
+          const res = await fetch(`https://the-trivia-api.com/v2/questions`)
+          const data = await res.json();
+          console.log(data)
+          const handledData = data.map((item, index) => {
+
+            const shuffledList = [...item.incorrectAnswers, item.correctAnswer]
+            for (let i = shuffledList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledList[i], shuffledList[j]] = [shuffledList[j], shuffledList[i]];
+            }
+          return {
+            id: index,
+            question: item.question.text,
+            answers: shuffledList,
+            correct_answer: item.correctAnswer,
+          }})
+          setLoading(false);
+          console.log('handleData', handledData)
+          fetchData.length <= 0 ? setFetchData(handledData) : // fetchData = array 
+                  setFetchData((prev) => [
+                      ...prev,
+                      ...handledData
+                  ])
+                } catch(error){
+                    console.error('could not fetch backup Quiz data', error);
+                }}
+
 
     useEffect( ()=>{
         fetchQuizData()

@@ -66,17 +66,22 @@ const tradingFunction = () => {
   }
 
   return (
-    <VictoryChart
-      theme={VictoryTheme.material}
-    >
-      <VictoryLine
-        style={{
-          data: { stroke: "#c43a31" },
-          parent: { border: "1px solid #ccc"}
-        }}
-        data={chartData}
-      />
-    </VictoryChart>
+    <SafeAreaView>
+      <StatusBar backgroundColor='lightgreen' barStyle='default' />
+      <VictoryChart
+        theme={VictoryTheme.material}
+      >
+        <VictoryLine
+          style={{
+            data: { stroke: "#c43a31" },
+            parent: { border: "1px solid #ccc"}
+          }}
+          data={chartData}
+        />
+      </VictoryChart>
+      <TouchableOpacity  role="button"><Text>Buy</Text></TouchableOpacity>
+      <TouchableOpacity  role="button"><Text>Sell</Text></TouchableOpacity>
+    </SafeAreaView>
   )
 }
 
