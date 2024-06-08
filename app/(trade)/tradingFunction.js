@@ -16,6 +16,13 @@ const tradingFunction = () => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [symbol, setSymbol] = useState('');
+  const [cash, setCash] = useState(100000);
+  const [action, setAction] = useState();
+  const [order, setOrder] = useState();
+  const [input, setInput] = useState('');
+  const [warning, setWarning] = useState('');
+
+
 
   async function fetchChart(){
     try {
@@ -65,6 +72,17 @@ const tradingFunction = () => {
     );
   }
 
+  function handleInput(input){
+    const regex = /^[0-9]*\.?[0-9]*$/;
+    if (regex.test(input)){
+      setInput(input);
+      setWarning('')
+    } else {
+      setWarning('Please enter valid number')
+    }
+  }
+
+
   return (
     <SafeAreaView>
       <StatusBar backgroundColor='lightgreen' barStyle='default' />
@@ -79,8 +97,19 @@ const tradingFunction = () => {
           data={chartData}
         />
       </VictoryChart>
-      <TouchableOpacity  role="button"><Text>Buy</Text></TouchableOpacity>
-      <TouchableOpacity  role="button"><Text>Sell</Text></TouchableOpacity>
+      <View>
+        
+        <TouchableOpacity  role="button" onPress={() => setAction("buy")}><Text>Buy</Text></TouchableOpacity>
+        <TouchableOpacity  role="button" onPress={() => setAction("sell")}><Text>Sell</Text></TouchableOpacity>
+      </View>
+      <View>
+        <TouchableOpacity  role="button" onPress={() => setOrder("market")}><Text>Market order</Text></TouchableOpacity>
+        <TouchableOpacity  role="button" onPress={() => setOrder("limit")}><Text>Limit order</Text></TouchableOpacity>
+      </View>
+      <TextInput placeholder='Enter slot size' value={input} onChangeText={handleInput}></TextInput> 
+      {warning && <Text>{warning}</Text>}
+      <TextInput placeholder='execution price' keyboardType='numeric' value={input} onChangeText={handleInput}></TextInput>
+      <TouchableOpacity  role="button" onPress={() => {}}><Text>Execute</Text></TouchableOpacity>
     </SafeAreaView>
   )
 }
