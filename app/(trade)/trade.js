@@ -5,8 +5,8 @@ import { FlatList, SafeAreaView, StatusBar, StyleSheet,
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Octicons, Feather, MaterialIcons} from '@expo/vector-icons';
-import ModalRender from '../(trade)/modalRender';
-
+import ModalRender from './modalRender';
+import { fetchPrice } from '../hooks/fetchPrice';
 
 const Trade = () => {
     const [coinData, setCoinData] = useState([]);
@@ -17,32 +17,43 @@ const Trade = () => {
     const [firstFiveCoins, setFirstFiveCoins] = useState([])
 
 
-async function fetchPrice(){
-    const url = `https://api.coincap.io/v2/assets`
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        console.log(data)
-        setCoinData(data.data)
-        setFirstFiveCoins(data.data.slice(0, 7));
-        setLoading(false);
-    } catch (error) {
-        console.error(`could not fetch coins' data`, error);
-    }}
+// async function fetchPrice(){
+//     const url = `https://api.coincap.io/v2/assets`
+//     try {
+//         const res = await fetch(url);
+//         const data = await res.json();
+//         console.log(data)
+//         setCoinData(data.data)
+//         setFirstFiveCoins(data.data.slice(0, 5));
+//         setLoading(false);
+//     } catch (error) {
+//         console.error(`could not fetch coins' data`, error);
+//     }}
+
 
 
 function constFetchingPrice(){
-        setInterval(() => {
-        fetchPrice()
+        setInterval(async () => {
+            const result = await fetchPrice();
+            if (result){
+                setCoinData(result);
+                setFirstFiveCoins(result.slice(0, 5))
+            }
     }, 10000)
 }
 
-    useEffect(() => {
+    useEffect(async () => {
         
         // constFetchingPrice(); 
         // fetching every 10 seconds
 
-        fetchPrice();
+        const result = await fetchPrice();
+        console.log(result)
+        if (result){
+            setLoading(false);
+            setCoinData(result);
+            setFirstFiveCoins(result.slice(0, 5))
+        }
       }, []);
 
 
