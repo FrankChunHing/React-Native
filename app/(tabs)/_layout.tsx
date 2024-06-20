@@ -35,7 +35,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="trade"
+        name="tradeNavigator"
         options={{
           title: 'CRYPTO',
           headerShown: false,

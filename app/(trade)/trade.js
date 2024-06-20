@@ -5,32 +5,61 @@ import { FlatList, SafeAreaView, StatusBar, StyleSheet,
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { Octicons, Feather, MaterialIcons} from '@expo/vector-icons';
+import ModalRender from './modalRender';
+import { fetchPrice } from '../hooks/fetchPrice';
 
 const Trade = () => {
     const [coinData, setCoinData] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isPressed, SetIsPressed] = useState(false);
+    const [isPressed, setIsPressed] = useState(false);
     const [search, setSearch] = useState();
     const navigation  = useNavigation();
     const [firstFiveCoins, setFirstFiveCoins] = useState([])
 
 
-async function fetchPrice(){
-    const url = `https://api.coincap.io/v2/assets`
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-        console.log(data)
-        setCoinData(data.data)
-        setFirstFiveCoins(data.data.slice(0, 5));
-        setLoading(false);
-    } catch (error) {
-        console.error(`could not fetch coins' data`, error);
-    }}
+// async function fetchPrice(){
+//     const url = `https://api.coincap.io/v2/assets`
+//     try {
+//         const res = await fetch(url);
+//         const data = await res.json();
+//         console.log(data)
+//         setCoinData(data.data)
+//         setFirstFiveCoins(data.data.slice(0, 5));
+//         setLoading(false);
+//     } catch (error) {
+//         console.error(`could not fetch coins' data`, error);
+//     }}
 
+
+
+function constFetchingPrice(){
+        setInterval(async () => {
+            const result = await fetchPrice();
+            if (result){
+                setCoinData(result);
+                setFirstFiveCoins(result.slice(0, 5))
+            }
+    }, 10000)
+}
 
     useEffect(() => {
-        fetchPrice()
+        
+        // constFetchingPrice(); 
+        // fetching every 10 seconds
+        async function getCoinData(){
+            try{
+            const result = await fetchPrice();
+            if (result){
+                setLoading(false);
+                setCoinData(result);
+                setFirstFiveCoins(result.slice(0, 5))
+            }
+            } catch{
+                console.error('Could not get coins data', error);
+            }
+
+        }
+        getCoinData()
       }, []);
 
 
@@ -40,6 +69,10 @@ async function fetchPrice(){
     }
 
 
+    function toggleSearch(){
+        setIsPressed(!isPressed)
+    }
+
     const Item = ({item}) => {
         const backgroundColor = item.changePercent24Hr >= 0 ? "green" : "red"
         return (
@@ -47,7 +80,11 @@ async function fetchPrice(){
             <View style={styles.textBox}>
                 <Text style={styles.text}>{item.id} ({item.symbol})</Text>
                 <View style={styles.insideTextBox}>
-                    <Text style={styles.text}>{(Number(item.priceUsd)).toFixed(2)}</Text>
+                    <Text style={styles.text}>{
+                        Number(item.priceUsd) >= 1 ?
+                        (Number(item.priceUsd)).toFixed(2) :
+                        (Number(item.priceUsd)).toFixed(5) }
+                    </Text>
                     <Text style={[styles.text, styles.percent, {backgroundColor} ]}>
                         {item.changePercent24Hr >= 0 ? `+${(item.changePercent24Hr * 1).toFixed(2)}` 
                             : (item.changePercent24Hr * 1).toFixed(2)}%
@@ -57,26 +94,7 @@ async function fetchPrice(){
         </TouchableOpacity>
     )}
 
-    const ModalItem = ({item}, index) => {
-        const color = item.changePercent24Hr >= 0 ? "green" : "red"
-        return (
-            <TouchableOpacity style={styles.eachRender} role="button">
-            <View style={styles.textBox}>
-                <Text>{index}</Text>
-                <Text style={styles.text}>{item.symbol}/USD</Text>
-                <View style={styles.insideTextBox}>
-                    <Text style={styles.text}>
-                        {(Number(item.priceUsd)).toFixed(2)}
-                    </Text>
-                    <Text style={[styles.text, styles.percent, {color} ]}>
-                        {item.changePercent24Hr >= 0 ? `+${Number(item.changePercent24Hr ).toFixed(2)}` 
-                                : Number(item.changePercent24Hr).toFixed(2)}%
-                    </Text>
-                </View>
-            </View>
-        </TouchableOpacity>
-        )
-    }
+
 
     if (loading) {
         return (
@@ -87,11 +105,13 @@ async function fetchPrice(){
     }
 
 
+
     return (
         <>
-            <StatusBar backgroundColor='lightgreen' barStyle='default' />
-            <View style={styles.searchBox}>
-                <Pressable onPress={() => {SetIsPressed(true)}} style={styles.searchTouch}>
+            
+            <SafeAreaView style={styles.searchBox}>
+                <StatusBar backgroundColor='lightgreen' barStyle='default' />
+                <Pressable onPress={() => {toggleSearch()}} style={styles.searchTouch}>
                     <Octicons name="search" size={20} style={styles.glass}/>
                     <TextInput placeholder='BTC' 
                         value={search}   
@@ -103,42 +123,13 @@ async function fetchPrice(){
                     <Feather name="help-circle" size={18} color="white" />
                     <MaterialIcons name="attach-money" size={19} color="white" />
                 </Pressable>
-            </View>
-            <Modal
-                animationType='slide'
-                transparent={false}
-                visible={isPressed}
-                onRequestClose={() => {
-                    Alert.alert("Closing popup")
-                    SetIsPressed(false)
-                }}>
-                <>
-                    <View style={styles.modalBox}>
-                        <View style={styles.searchBox}>
-                            <Pressable onPress={() => {SetIsPressed(true)}} style={styles.searchTouch}>
-                                <Octicons name="search" size={20} style={styles.glass}/>
-                                <TextInput placeholder='Search by symbol' 
-                                    value={search}   
-                                    style={styles.search}
-                                    onChangeText={setSearch} />
-                            </Pressable>
-                            <TouchableOpacity onPress={() => {SetIsPressed(false)}} style={styles.iconCancel}>
-                                <Text style={styles.cancel}>
-                                    Cancel {search}
-                                </Text>
-                        </TouchableOpacity>
-                        </View>                       
-                        <FlatList
-                            data={search ?
-                                coinData.filter((coin) => coin.symbol.includes(search.toUpperCase()))
-                                : coinData}
-                            renderItem={ModalItem}
-                            keyExtractor={(item) => item.id}
-                            // extraData={selectedId}
-                        />
-                    </View>
-                </>
-            </Modal>
+            </SafeAreaView>
+            <ModalRender 
+                coinData={coinData}
+                isPressed={isPressed}
+                toggleSearch={() => toggleSearch()}
+                />
+
             <SafeAreaView style={styles.main}>
                 <StatusBar backgroundColor='lightgreen' barStyle='default' />
                 <FlatList
@@ -200,37 +191,29 @@ const styles = StyleSheet.create({
         flex: 2,
         alignItems: 'center',
         margin: 6,
-        marginLeft: 14,
+        marginLeft: 20,
         backgroundColor: "#181818",
         borderRadius: 10,
+        height: 30,
     },
     iconTouch:{
         flex: 1,
         marginLeft: 10,
         flexDirection: 'row',
         justifyContent: 'space-around',
+        
     },
     glass:{
         color: 'grey',
-       
         padding: 2,
     },
     search: {
         color: "grey",
         fontSize: 15,
         padding: 2,
+        flex: 1,
     },  
 
-    modalBox: {
-        backgroundColor: "black"
-    },
-    iconCancel:{
-        marginLeft: 5,
-        padding: 3,
-    },
-    cancel:{
-        color: '#e6b800',
-    },
 })
 
 
