@@ -10,6 +10,7 @@ import useLoadTradingData from '../utils/useLoadTradingData';
 import { calCashUsed } from '../utils/calCashUsed';
 import { loadTradingData } from '../services/loadStorage';
 import { useFetchChart } from '../hooks/useFetchChart';
+import { useFetchPrice } from '../hooks/useFetchPrice';
 
 const tradingFunction = () => {
 
@@ -19,65 +20,19 @@ const tradingFunction = () => {
   const [currentPrice, setCurrentPrice] = useState(null);
   const [comparePrice, setComparePrice] = useState(null);
   const [cash, setCash] = useState(100000);
-  const [action, setAction] = useState();
-  const [order, setOrder] = useState();
+  const [action, setAction] = useState('');
+  const [order, setOrder] = useState('');
   const [warning, setWarning] = useState('');
   const [confirmExecution, setConfirmExecution] = useState(false);
   const [textColor, setTextColor] = useState('red');
   const intervalRef = useRef(null);
-  const [slotSize, setSlotSize] = useState();
-  const [limitOrderPrice, setLimiteOrderPrice] = useState();
-  const [data, setData] = useState();
+  const [slotSize, setSlotSize] = useState('');
+  const [limitOrderPrice, setLimiteOrderPrice] = useState('');
+  const [data, setData] = useState([]);
   const [cashUsed, setCashUsed] = useState(0);
   const [confirmTrade, setConfirmTrade] = useState(0);
 
-
-
   const regex = /^[0-9]*\.?[0-9]*$/;
-
-
-  // async function fetchChart() {
-  //   try {
-  //     const storedSymbol = await AsyncStorage.getItem('symbol');
-  //     if (storedSymbol) {
-  //       setSymbol(storedSymbol);
-  //       let url = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=${storedSymbol}&tsym=USD&limit=50&api_key=accac784ddca067dea515977aa6d63db0b844c7f1b6a89afecfea41a4d1a9de0`;
-  //       const res = await fetch(url);
-  //       const data = await res.json();
-
-  //       const handleData = data.Data.Data.map((item) => {
-  //         return {
-  //           x: `${new Date(item.time).getMinutes()}:${new Date(item.time).getSeconds()}`,
-  //           y: Number(item.close)
-  //         }
-  //       });
-  //       setChartData(handleData);
-  //       setLoading(false);
-  //     } else {
-  //       console.error('Symbol not found in AsyncStorage');
-  //       setLoading(false);
-  //     }
-  //   } catch (error) {
-  //     console.error(`Could not fetch chart data`, error);
-  //   }
-  // }
-  
-  async function fetchPrice() {
-    const storedSymbol = await AsyncStorage.getItem('symbol');
-    console.log("fetching current Price")
-    console.log("compare", comparePrice)
-    let url = `https://api.coinbase.com/v2/exchange-rates?currency=${storedSymbol}`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      const price = data.data.rates.USD;
-      setCurrentPrice(price);
-
-    } catch (error) {
-      console.error(`Could not fetch price data`, error);
-    }
-  }
-
 
   const fetchData = async () => {
     const result = await loadTradingData();
@@ -104,9 +59,9 @@ const tradingFunction = () => {
           console.log('Symbol not found in AsyncStorage');
         }
         setLoading(false);
-        fetchPrice();
-        const interval = setInterval(() => {
-          fetchPrice();
+        setCurrentPrice(await useFetchPrice());
+        const interval = setInterval(async () => {
+          setCurrentPrice(await useFetchPrice());
         }, 10000);
         intervalRef.current = interval;
       } catch (error) {

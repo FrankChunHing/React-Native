@@ -42,18 +42,24 @@ function constFetchingPrice(){
     }, 10000)
 }
 
-    useEffect(async () => {
+    useEffect(() => {
         
         // constFetchingPrice(); 
         // fetching every 10 seconds
+        async function getCoinData(){
+            try{
+            const result = await fetchPrice();
+            if (result){
+                setLoading(false);
+                setCoinData(result);
+                setFirstFiveCoins(result.slice(0, 5))
+            }
+            } catch{
+                console.error('Could not get coins data', error);
+            }
 
-        const result = await fetchPrice();
-        console.log(result)
-        if (result){
-            setLoading(false);
-            setCoinData(result);
-            setFirstFiveCoins(result.slice(0, 5))
         }
+        getCoinData()
       }, []);
 
 
