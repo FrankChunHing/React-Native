@@ -1,11 +1,14 @@
 import { FlatList, SafeAreaView, StatusBar, StyleSheet, 
-    Text, TouchableOpacity, Image, View, Pressable,
+    Text, TouchableOpacity, Image, View, Pressable, useColorScheme,
     ActivityIndicator, TextInput, Modal, Alert, ScrollView } from 'react-native';
 import React, { useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RenderNews = () => {
     const [fetchNews, setFetchNews] = useState([]);
+
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
 
     async function fetchAPINews() {
         try {
@@ -21,6 +24,16 @@ const RenderNews = () => {
         fetchAPINews();
     }, []);
 
+    const styles = StyleSheet.create({
+        image: {
+            height: 120,
+            width: 120,
+        },
+        text: {
+            color: isDarkMode  ? 'white' : 'black',
+        }
+    });
+
     return (
         <ScrollView>
             {fetchNews.length > 0 ? (
@@ -28,7 +41,7 @@ const RenderNews = () => {
                     console.log(data.image_url)
                     return (
                     <View key={index}>
-                        <Text>{data.title}</Text>
+                        <Text style={styles.text}>{data.title}</Text>
                         <Image style={styles.image} source={{ uri: data.image_url }} />
                     </View>
                 )})
@@ -41,9 +54,4 @@ const RenderNews = () => {
 
 export default RenderNews;
 
-const styles = StyleSheet.create({
-    image: {
-        height: 120,
-        width: 120,
-    },
-});
+

@@ -20,36 +20,21 @@ const TradingScreen = () => {
   const [limitOrderPrice, setLimitOrderPrice] = useState();
   const regex = /^[0-9]*\.?[0-9]*$/;
 
-  const currentPrice = useFetchPrice(symbol);
+
 
   useEffect(async () => {
     const storedSymbol = await AsyncStorage.getItem('symbol');
     if (storedSymbol) {
-      setSymbol(storedSymbol);} 
-      else {
+      setSymbol(storedSymbol)} 
+    else {
         console.error('Symbol not found in AsyncStorage');
-        setLoading(false);
       }
-    const fetchChart = async () => {
+    const chartPriceData = useFetchPrice(symbol);
+    if (chartPriceData){
+      setLoading(false);
+      setChartData(chartPriceData)
+    }
 
-        const url = `https://min-api.cryptocompare.com/data/v2/histohour?fsym=${storedSymbol}&tsym=USD&limit=50&api_key=your_api_key`;
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          const handleData = data.Data.Data.map((item) => ({
-            x: `${new Date(item.time).getMinutes()}:${new Date(item.time).getSeconds()}`,
-            y: Number(item.close)
-          }));
-          setChartData(handleData);
-          setLoading(false);
-        } catch (error) {
-          console.error('Could not fetch chart data', error);
-          setLoading(false);
-        }
-      
-    };
-    
-    fetchChart();
   }, []);
 
   useEffect(() => {
@@ -80,17 +65,17 @@ const TradingScreen = () => {
     }
   };
 
-  const storageTradingData = async (order, action, limitOrderPrice, currentPrice, slotSize, cash) => {
-    try {
-      const existingDataJson = await AsyncStorage.getItem('tradingData');
-      const existingData = existingDataJson ? JSON.parse(existingDataJson) : [];
-      const newData = { order, action, limitOrderPrice, currentPrice, slotSize, cash };
-      const updatedData = [...existingData, newData];
-      await AsyncStorage.setItem('tradingData', JSON.stringify(updatedData));
-    } catch (error) {
-      console.log('Error saving AsyncStorage data', error);
-    }
-  };
+  // const storageTradingData = async (order, action, limitOrderPrice, currentPrice, slotSize, cash) => {
+  //   try {
+  //     const existingDataJson = await AsyncStorage.getItem('tradingData');
+  //     const existingData = existingDataJson ? JSON.parse(existingDataJson) : [];
+  //     const newData = { order, action, limitOrderPrice, currentPrice, slotSize, cash };
+  //     const updatedData = [...existingData, newData];
+  //     await AsyncStorage.setItem('tradingData', JSON.stringify(updatedData));
+  //   } catch (error) {
+  //     console.log('Error saving AsyncStorage data', error);
+  //   }
+  // };
 
   return (
     <SafeAreaView style={styles.container}>

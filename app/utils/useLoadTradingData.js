@@ -4,7 +4,7 @@ import { calCashUsed } from './calCashUsed';
 
 const useLoadTradingData = () => {
   const [data, setData] = useState([]);
-  const [cashUsed, setCashUsed] = useState();
+  const [cashUsed, setCashUsed] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -1,17 +1,21 @@
 import React, {useEffect, useState} from 'react';
 import { FlatList, SafeAreaView, StatusBar, StyleSheet, 
-    Text, TouchableOpacity, Image, View, Pressable,
+    Text, TouchableOpacity, Image, View, Pressable, useColorScheme,
     ActivityIndicator, TextInput, Modal} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadTradingData } from '../services/loadStorage';
 import { calCashUsed } from '../utils/calCashUsed';
 import useLoadTradingData from '../utils/useLoadTradingData';
 import { ScrollView } from 'react-native-gesture-handler';
-const tradingLog = () => {
+const TradingLog = () => {
   // const [executions, setExecutions] = useState([])
   // const [orders, setOrders] = useState([])
   const [cash, setCash] = useState(100000);
   const { data, cashUsed } = useLoadTradingData();
+
+
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
 
   useEffect(() => {
     if (cashUsed !== undefined) {
@@ -31,23 +35,25 @@ const tradingLog = () => {
           : `limit order price: ${trade.limitOrderPrice}` }</Text>
       </ScrollView>
     )
-
-
   }
-
+  
+  const styles = StyleSheet.create({
+    text:{
+      color: isDarkMode  ? 'white' : 'black',
+    }
+  })
 
   return (
     <SafeAreaView>
         <StatusBar backgroundColor='lightgreen' barStyle='default' />
         <View>
-            <Text>Cash Position: ${cash}</Text>
-            <Text>{cashUsed}</Text>
+            <Text style={styles.text}>Cash Position: ${cash}</Text>
+            <Text style={styles.text}>{cashUsed}</Text>
             {renderTrades(data)}
         </View>
     </SafeAreaView>
   )
 }
 
-export default tradingLog
+export default TradingLog
 
-const styles = StyleSheet.create({})

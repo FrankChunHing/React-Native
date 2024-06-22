@@ -2,10 +2,12 @@ import React, {useEffect, useState} from 'react';
 import * as Location from 'expo-location';
 import { weatherCode } from './weatherCode.js';
 import { FlatList, SafeAreaView, StatusBar, StyleSheet, 
-        Text, TouchableOpacity, Image, View, 
+        Text, TouchableOpacity, Image, View, Platform, useColorScheme,
         ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+
+
 
 
 const App = () => {
@@ -16,6 +18,9 @@ const App = () => {
   const [long, setLong] = useState(null);
   const [username, setUsername] = useState('')
   const navigate = useNavigation();
+
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === 'dark';
 
   // const { username } = route?.params ?? {};
   async function retrieveData(){
@@ -122,6 +127,52 @@ const App = () => {
     );
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      fontFamily: 'sans-serif',
+      flex: 1,
+      marginTop: StatusBar.currentHeight || 0,
+    },
+    header: {
+      fontSize: 40,
+      textAlign: 'center',
+      color: isDarkMode  ? 'white' : 'black',
+    },
+    item: {
+      padding: 20,
+      marginVertical: 8,
+      marginHorizontal: 16,
+      borderRadius: 10,
+      shadowColor: '#333333',
+      shadowOffset: { width: 5, height: 5 },
+      shadowOpacity: 0.6,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    itemContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    textContainer: {
+      textAlign: 'right',
+      alignItems: 'center',
+      flex: 1,
+    },
+    title: {
+      fontSize: 30,
+    },
+    description: {
+      fontSize: 22,
+    },
+    temperature: {
+      fontSize: 22,
+    },
+    image: {
+      height: 120,
+      width: 120,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor='lightgreen' barStyle='default' />
@@ -139,49 +190,6 @@ const App = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    fontFamily: 'sans-serif',
-    flex: 1,
-    marginTop: StatusBar.currentHeight || 0,
-  },
-  header: {
-    fontSize: 40,
-    textAlign: 'center',
-  },
-  item: {
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 10,
-    shadowColor: '#333333',
-    shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  itemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  textContainer: {
-    textAlign: 'right',
-    alignItems: 'center',
-    flex: 1,
-  },
-  title: {
-    fontSize: 30,
-  },
-  description: {
-    fontSize: 22,
-  },
-  temperature: {
-    fontSize: 22,
-  },
-  image: {
-    height: 120,
-    width: 120,
-  },
-});
+
 
 export default App;
