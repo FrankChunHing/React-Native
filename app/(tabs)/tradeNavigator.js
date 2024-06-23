@@ -3,15 +3,15 @@ import { StyleSheet } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import Trade from '../(trade)/trade';
 import tradingFunction from '../(trade)/tradingFunction';
-import tradingLog from '../(trade)/tradingLog';
+import TradingLog from '../(trade)/tradingLog';
 import RenderNews from '../(trade)/renderNews';
-
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Tab = createMaterialTopTabNavigator();
 
 const tradeNavigator = () => {
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <Trade />
       <Tab.Navigator
         screenOptions={{
@@ -24,9 +24,9 @@ const tradeNavigator = () => {
         }}
       >
         <Tab.Screen name="News" component={RenderNews} />
-        <Tab.Screen name="Function" component={tradingLog} />
+        <Tab.Screen name="Function" component={TradingLog} />
       </Tab.Navigator>
-    </>
+    </GestureHandlerRootView>
   );
 }
 
