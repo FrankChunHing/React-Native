@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import * as Location from 'expo-location';
 import { weatherCode } from './weatherCode.js';
-import { FlatList, SafeAreaView, StatusBar, StyleSheet, 
+import { FlatList, SafeAreaView, StatusBar, StyleSheet, Linking,
         Text, TouchableOpacity, Image, View, Platform, useColorScheme,
         ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,10 +27,12 @@ const App = () => {
     try {
       const userData = await AsyncStorage.getItem('username');
       if (userData !== null){
-        console.log('userData not null')
-        setUsername(JSON.parse(userData))
+        console.log('userData not null:',userData)
+        console.log(typeof(userData))
+        setUsername(userData)
       } else {
         console.log('userData null')
+        // Linking.openURL('/login');
         navigate.navigate('(auth)')
       }
     } catch (error) {
@@ -176,7 +178,7 @@ const App = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor='lightgreen' barStyle='default' />
-      <Text style={styles.header}> Hello {username}! Your local weather for the coming 7 days</Text>
+      <Text style={styles.header}> Hello {username}! Here is your local weather for the coming 7 days</Text>
       {weatherData ? 
         <FlatList
           data={weatherData}

@@ -1,11 +1,10 @@
-import { FlatList, SafeAreaView, StatusBar, StyleSheet, 
-    Text, TouchableOpacity, Image, View, Pressable, useColorScheme,
-    ActivityIndicator, TextInput, Modal, Alert, ScrollView } from 'react-native';
-import React, { useEffect, useState, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView, StyleSheet, Text, Image, View, useColorScheme, ActivityIndicator, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
 
 const RenderNews = () => {
     const [fetchNews, setFetchNews] = useState([]);
+    const defaultImage = 'https://wallpapercave.com/wp/wp2446263.jpg';
+
 
     const colorScheme = useColorScheme();
     const isDarkMode = colorScheme === 'dark';
@@ -25,33 +24,63 @@ const RenderNews = () => {
     }, []);
 
     const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            padding: 10,
+        },
+        column: {
+            flex: 1,
+        },
+        itemContainer: {
+            marginBottom: 10,
+        },
         image: {
             height: 120,
             width: 120,
         },
         text: {
-            color: isDarkMode  ? 'white' : 'black',
+            color: isDarkMode ? 'white' : 'black',
         }
     });
 
+    const leftColumnNews = fetchNews.filter((_, index) => index % 2 === 0);
+    const rightColumnNews = fetchNews.filter((_, index) => index % 2 !== 0);
+
     return (
         <ScrollView>
-            {fetchNews.length > 0 ? (
-                fetchNews.map((data, index) => {
-                    console.log(data.image_url)
-                    return (
-                    <View key={index}>
-                        <Text style={styles.text}>{data.title}</Text>
-                        <Image style={styles.image} source={{ uri: data.image_url }} />
-                    </View>
-                )})
-            ) : (
-                <ActivityIndicator size="large" color="midnightblue" />
-            )}
+            <View style={styles.container}>
+                <View style={styles.column}>
+                    {leftColumnNews.map((data, index) => (
+                        <View style={styles.itemContainer} key={index}>
+                            <Text style={styles.text}>{data.title}</Text>
+                            {data.image_url && <Image style={styles.image} 
+                                source={{ uri: data.image_url }} 
+                                onError={(e) => {
+                                    e.onerror = null; 
+                                    e.src = defaultImage;
+                                }}
+                                />}
+                        </View>
+                    ))}
+                </View>
+                <View style={styles.column}>
+                    {rightColumnNews.map((data, index) => (
+                        <View style={styles.itemContainer} key={index}>
+                            <Text style={styles.text}>{data.title}</Text>
+                            {data.image_url && <Image style={styles.image} 
+                            source={{ uri: data.image_url }} 
+                            onError={(e) => {
+                                e.onerror = null; 
+                                e.src = defaultImage;
+                            }}/>}
+                        </View>
+                    ))}
+                </View>
+            </View>
         </ScrollView>
     );
 }
 
 export default RenderNews;
-
-
