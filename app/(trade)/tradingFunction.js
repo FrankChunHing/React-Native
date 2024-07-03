@@ -18,6 +18,7 @@ const tradingFunction = () => {
 
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [username, setUsername] = useState('');
   const [symbol, setSymbol] = useState('');
   const [currentPrice, setCurrentPrice] = useState(null);
   const [comparePrice, setComparePrice] = useState(null);
@@ -35,6 +36,7 @@ const tradingFunction = () => {
   const [cashUsed, setCashUsed] = useState(0);
   const [confirmTrade, setConfirmTrade] = useState(0);
 
+  let time = Date.now();
   const regex = /^[0-9]*\.?[0-9]*$/;
 
   const fetchData = async () => {
@@ -45,9 +47,35 @@ const tradingFunction = () => {
       setCash(100000 - calCashUsed(result))
     }
   };
+
+  async function postTradesAndOrdersBackend(){
+    try {
+      const res = await fetch(`http://localhost:8000/${username}/trades`,{
+        method: 'POST',
+        headers:{
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type':'application/json'
+        },
+        body: JSON.stringify({"username":username, "time":time, "symbol":symbol,
+          "type":order,"side":action,"size":slotSize,
+          "price":order === "market" ? currentPrice : limitOrderPrice,
+          "isExecuted": order === "market" ? true : false,
+          "isClosed": false
+        })
+      })
+      const response = await res.json();
+      console.log("sent POST reqest to backend server:", response)
+    } catch (error) {
+      console.error('Error:', error);
+  }}
+
   useEffect(() => {
     const init = async () => {
       try {
+        const name = await AsyncStorage.getItem('username');
+        if (name) {
+          setUsername(name);
+        }
         const storedSymbol = await AsyncStorage.getItem('symbol');
         if (storedSymbol) {
           setSymbol(storedSymbol);
@@ -128,8 +156,7 @@ const tradingFunction = () => {
         <VictoryChart
           width={!moveKeyboard ? 500: 400}
           height={!moveKeyboard ? 300: 50}
-          theme={VictoryTheme.material}
-        >
+          theme={VictoryTheme.material}>
           <VictoryLine
             style={{
               data: { stroke: "#c43a31" },
@@ -143,15 +170,19 @@ const tradingFunction = () => {
         
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, styles.buy, 
-          {backgroundColor: action === "buy" ? "#32CD32" : "blue"}]} 
-          onPress={() => setAction("buy")}>
+            {backgroundColor: action === "buy" ? "#32CD32" : "blue"}]} 
+            onPress={() => setAction("buy")}
+            {...(Platform.OS !== 'web' && { accessibilityHint: 'Buy action' })}
+          >
             <Text style={styles.buttonText}>
               Buy
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.button, styles.sell, 
-          {backgroundColor: action === "sell" ? "red" : "blue"}]} 
-          onPress={() => setAction("sell")}>
+            {backgroundColor: action === "sell" ? "red" : "blue"}]} 
+            onPress={() => setAction("sell")}
+            {...(Platform.OS !== 'web' && { accessibilityHint: 'Market order' })}
+          >
             <Text style={styles.buttonText}>
               Sell
             </Text>
@@ -179,9 +210,9 @@ const tradingFunction = () => {
             <TextInput style={styles.input} placeholder='Slot size' 
               onFocus={() => setMoveKeyboard(true)}
               onBlur={() => setMoveKeyboard(false)}
-              value={slotSize} onChangeText={(value) => {
-                setSlotSize(value);
-                if (!handleInput(value)){setSlotSize(slotSize.replace(!regex, ''))}
+              value={slotSize} 
+              onChangeText={(value) => {
+                if (handleInput(value)){setSlotSize(value)}
                 }} />
             {warning && <Text style={styles.warning}>{warning}</Text>}
             {order === 'limit' && <TextInput style={styles.input} 
@@ -189,8 +220,7 @@ const tradingFunction = () => {
               onBlur={() => setMoveKeyboard(false)}
               placeholder='limit order price' keyboardType='numeric' 
               value={limitOrderPrice} onChangeText={(value) => {
-                setLimiteOrderPrice(value);
-                if (!handleInput(value)){setLimiteOrderPrice(limitOrderPrice.replace(!regex, ''))}
+                if (handleInput(value)){setLimiteOrderPrice(value)}
                 }} /> }
           </View>
         <TouchableOpacity style={styles.executeButton} onPress={() => { 
@@ -200,7 +230,6 @@ const tradingFunction = () => {
             Execute
           </Text>
         </TouchableOpacity>
-        <Text>USD Cash, Market Value, Position</Text>
         <Modal
           animationType='slide'
           transparent={true}
@@ -212,12 +241,14 @@ const tradingFunction = () => {
           <View style={styles.modalBackground}>
             <View style={styles.modalContainer}>
             {(!order || !action) ? 
-              <Text style={{color: "red"}}> Please select Buy/Sell and order type</Text> : 
-                (slotSize * currentPrice > cash && order === 'market') || 
-                (slotSize * limitOrderPrice > cash && order === 'limit') ?
-                <Text style={{color: "red"}}>Not enough BP</Text> :
+              <Text style={[styles.buttonText, {color: "red"}]}> Please select Buy/Sell and order type</Text> : 
+                ((slotSize * currentPrice > cash && order === 'market') || 
+                (slotSize * limitOrderPrice > cash && order === 'limit')) ?
+                <Text style={[styles.buttonText, {color: "red"}]}>Not enough BP</Text> :
                 <>
-                <Text>Confirm the trade: {order} order with slot size {slotSize} at price: { order === 'market' ? currentPrice : limitOrderPrice}</Text>
+                <Text style={styles.buttonText}>
+                  Confirm the trade: {order} order with slot size {slotSize} at price: 
+                  { order === 'market' ? currentPrice : limitOrderPrice}</Text>
                 <TouchableOpacity style={styles.modalButton} onPress={
                   async () => {
                     await storageTradingData(symbol, order, action, 
@@ -225,13 +256,14 @@ const tradingFunction = () => {
                       slotSize, cash)
                     setConfirmExecution(false);
                     setConfirmTrade((prev) => prev + 1);
+                    postTradesAndOrdersBackend();
                     // const result = await storageTradingData(symbol, order, action, limitOrderPrice, currentPrice, slotSize, cash);
 
                     // if (result) {
                     //   setCash(result.newCash);
                     //   setCashUsed(result.newCashUsed);
                     // }
-  }}>
+                  }}>
                   <Text style={styles.buttonText}>Confirm</Text>
                 </TouchableOpacity> 
                 </>}

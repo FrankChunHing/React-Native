@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import { FlatList, SafeAreaView, StatusBar, StyleSheet, 
     Text, TouchableOpacity, Image, View, Pressable,
     ActivityIndicator, TextInput, Modal} from 'react-native';
@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Octicons, Feather, MaterialIcons} from '@expo/vector-icons';
 import ModalRender from './modalRender';
 import { fetchPrice } from '../hooks/fetchPrice';
+// import { storePriceData } from '../services/storePriceService';
 
 const Trade = () => {
     const [coinData, setCoinData] = useState([]);
@@ -15,7 +16,7 @@ const Trade = () => {
     const [search, setSearch] = useState();
     const navigation  = useNavigation();
     const [firstFiveCoins, setFirstFiveCoins] = useState([])
-
+    const intervalRef = useRef(null);
 
 // async function fetchPrice(){
 //     const url = `https://api.coincap.io/v2/assets`
@@ -38,13 +39,17 @@ function constFetchingPrice(){
             if (result){
                 setCoinData(result);
                 setFirstFiveCoins(result.slice(0, 5))
+                console.log("fetched price result:", result)
+                await AsyncStorage.setItem('fetchedPriceData', JSON.stringify(result));
             }
-    }, 10000)
+    }, 15000)
 }
+
+
 
     useEffect(() => {
         
-        // constFetchingPrice(); 
+        const interval = constFetchingPrice(); 
         // fetching every 10 seconds
         async function getCoinData(){
             try{
@@ -53,13 +58,18 @@ function constFetchingPrice(){
                 setLoading(false);
                 setCoinData(result);
                 setFirstFiveCoins(result.slice(0, 5))
+                console.log("fetched price result:", result)
+                await AsyncStorage.setItem('fetchedPriceData', JSON.stringify(result));
             }
-            } catch{
+            } catch (error){
                 console.error('Could not get coins data', error);
             }
 
+
         }
         getCoinData()
+        intervalRef.current = interval;
+        return () => clearInterval(intervalRef.current);
       }, []);
 
 

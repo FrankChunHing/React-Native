@@ -14,6 +14,7 @@ import eyeHide from "../../assets/icons/eye-hide.png"
 
       const [username, setUsername] = useState('')
       const [password, setPassword] = useState('')
+      const [response, setResponse] = useState('')
       const [checkCred, setCheckCred] = useState(null)
       const [hoveredUsername, setHoveredUsername] = useState(false)
       const [hoveredPassword, setHoveredPassword] = useState(false)
@@ -36,6 +37,27 @@ import eyeHide from "../../assets/icons/eye-hide.png"
       }
       
 
+      async function fetchLogin(){
+        try{
+          const res = await fetch("http://localhost:8000/api/v1/user/login",{
+            method: 'POST',
+            headers:{
+              'Access-Control-Allow-Origin': '*',
+              'Content-Type':'application/json'
+            },
+            body: JSON.stringify({username, password})
+          })
+          const textResponse = await res.text();
+          setResponse(textResponse);
+          if (textResponse === username){
+            storeData();
+            navigate.navigate('(tabs)' );
+          }
+          console.log("Response:", textResponse);
+        } catch (error) {
+          console.error('Error:', error);
+      }}
+
       function handleToggle(){
 
         if (username === "" || password === "") {
@@ -43,19 +65,22 @@ import eyeHide from "../../assets/icons/eye-hide.png"
           return 
         }
 
-          const filteredCred  = loginCred.filter(
-              (cred) => {
-                  console.log(cred.username)
-                  console.log(username)
-                  return cred.username === username && cred.password === password}
-            );
-            setCheckCred(filteredCred);
-            if (filteredCred.length > 0) {
-              storeData()
-              navigate.navigate('(tabs)' ); // Navigate to the 'index' screen
-          }
+        const filteredCred  = loginCred.filter(
+            (cred) => {
+                console.log(cred.username)
+                console.log(username)
+                return cred.username === username && cred.password === password}
+          );
+          setCheckCred(filteredCred);
+          if (filteredCred.length > 0) {
+            storeData()
+            navigate.navigate('(tabs)' ); // Navigate to the 'index' screen
+        }
       }
       
+      function toRegister(){
+        navigate.navigate('register')
+      }
 
       const renderItem = ({ item }) => (
         <View style={styles.credentialContainer}>
@@ -96,18 +121,22 @@ import eyeHide from "../../assets/icons/eye-hide.png"
                     </TouchableOpacity>
                   </View >
                   <TouchableOpacity style={styles.button} 
-                      onPress={() => {handleToggle()}}>
+                      onPress={() => {fetchLogin()}}>
                       <Text style={styles.buttonText}>Login</Text>
                   </TouchableOpacity>
-                  {checkCred && (
+                  {response && (
                       <Text style={styles.result}>
-                          {checkCred.length > 0 ? 
+                          {response === username ? 
                               "logging in" : 
                               'Username or password incorrect'}
                       </Text>
                   )}
 
               </View>
+              <TouchableOpacity style={[styles.button, styles.resigerButton]} 
+                  onPress={() => {toRegister()}}>
+                  <Text style={styles.buttonText}>Go to Register</Text>
+              </TouchableOpacity>
               <View style={styles.listContainer}>
                   <FlatList
                   data={Object.entries(loginCred).map(([id, creds]) => ({ id, ...creds }))}
@@ -226,6 +255,11 @@ import eyeHide from "../../assets/icons/eye-hide.png"
       passwordInput: {
         flex: 1,
     },
+      resigerButton: {
+        borderRadius: 30,
+        width: 200,
+        backgroundColor: "red"
+      }
     });
 
 export default Login;
