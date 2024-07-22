@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Octicons, Feather, MaterialIcons} from '@expo/vector-icons';
 import ModalRender from './modalRender';
 import { fetchPrice } from '../hooks/fetchPrice';
+import * as Linking from 'expo-linking';
 // import { storePriceData } from '../services/storePriceService';
 
 const Trade = () => {
@@ -58,7 +59,7 @@ function constFetchingPrice(){
                 setLoading(false);
                 setCoinData(result);
                 setFirstFiveCoins(result.slice(0, 5))
-                console.log("fetched price result:", result)
+                console.log("inital fetched price result:", result)
                 await AsyncStorage.setItem('fetchedPriceData', JSON.stringify(result));
             }
             } catch (error){
@@ -131,7 +132,8 @@ function constFetchingPrice(){
                 <Pressable style={styles.iconTouch}>
                     <Feather name="bell" size={18} color="white" />
                     <Feather name="help-circle" size={18} color="white" />
-                    <MaterialIcons name="attach-money" size={19} color="white" />
+                    <MaterialIcons name="attach-money" size={19} color="white" 
+                    onPress={() => Linking.openURL('http://localhost:8081/tradingLog')}/>
                 </Pressable>
             </SafeAreaView>
             <ModalRender 

@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const loadTradingData = async() => {
+export const loadLocalTradingData = async() => {
     try {
-        const tradingData = await AsyncStorage.getItem('tradingData');
+        const tradingData = await AsyncStorage.getItem('userFetchedTradingData');
         const data = JSON.parse(tradingData);
         return data
     }
