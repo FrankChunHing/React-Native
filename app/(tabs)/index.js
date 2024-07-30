@@ -6,8 +6,8 @@ import { FlatList, SafeAreaView, StatusBar, StyleSheet, Linking,
         ActivityIndicator} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-
-
+import {useFetchedTradingData} from '../utils/useFetchedTradingData';
+import { fetchTradingData } from '../services/fetchTradingData.js';
 
 
 const App = () => {

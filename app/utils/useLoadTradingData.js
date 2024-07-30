@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { loadTradingData } from '../services/loadStorage';
+import { loadLocalTradingData } from '../services/loadStorage';
 import { calCashUsed } from './calCashUsed';
 
 const useLoadTradingData = () => {
@@ -8,7 +8,7 @@ const useLoadTradingData = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await loadTradingData();
+      const result = await loadLocalTradingData();
       if (result) {
         setData(result);
         setCashUsed(calCashUsed(result));

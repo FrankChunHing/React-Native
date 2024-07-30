@@ -10,10 +10,11 @@ import { VictoryBar, VictoryChart, VictoryAxis,
 import { storageTradingData } from '../services/storageService';
 import useLoadTradingData from '../utils/useLoadTradingData';
 import { calCashUsed } from '../utils/calCashUsed';
-import { loadTradingData } from '../services/loadStorage';
+import { loadLocalTradingData } from '../services/loadStorage';
 import { useFetchChart } from '../hooks/useFetchChart';
 import { useFetchPrice } from '../hooks/useFetchPrice';
-
+import { createTradeAndOrderBackend } from '../services/createTradeAndOrderBackend.js';
+import { fetchTradingData } from '../services/fetchTradingData';
 const tradingFunction = () => {
 
   const [chartData, setChartData] = useState([]);
@@ -22,7 +23,8 @@ const tradingFunction = () => {
   const [symbol, setSymbol] = useState('');
   const [currentPrice, setCurrentPrice] = useState(null);
   const [comparePrice, setComparePrice] = useState(null);
-  const [cash, setCash] = useState(100000);
+  const [initCash, setInitCash] = useState(100000);
+  const [cash, setCash] = useState(60000);
   const [action, setAction] = useState('');
   const [order, setOrder] = useState('');
   const [warning, setWarning] = useState('');
@@ -35,12 +37,13 @@ const tradingFunction = () => {
   const [data, setData] = useState([]);
   const [cashUsed, setCashUsed] = useState(0);
   const [confirmTrade, setConfirmTrade] = useState(0);
+  const [fetchedBackendUserTradingData, setFetchedBackendUserTradingData] = useState([]);
 
   let time = Date.now();
   const regex = /^[0-9]*\.?[0-9]*$/;
 
   const fetchData = async () => {
-    const result = await loadTradingData();
+    const result = await loadLocalTradingData();
     if (result) {
       setData(result);
       setCashUsed(calCashUsed(result));
@@ -48,26 +51,18 @@ const tradingFunction = () => {
     }
   };
 
-  async function postTradesAndOrdersBackend(){
+  const fetchBackendUserTradingData = async (username) => {
     try {
-      const res = await fetch(`http://localhost:8000/${username}/trades`,{
-        method: 'POST',
-        headers:{
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type':'application/json'
-        },
-        body: JSON.stringify({"username":username, "time":time, "symbol":symbol,
-          "type":order,"side":action,"size":slotSize,
-          "price":order === "market" ? currentPrice : limitOrderPrice,
-          "isExecuted": order === "market" ? true : false,
-          "isClosed": false
-        })
-      })
-      const response = await res.json();
-      console.log("sent POST reqest to backend server:", response)
+      const userTradingData = await fetchTradingData(username);
+      await AsyncStorage.setItem('userFetchedTradingData', JSON.stringify(userTradingData));
+      // setFetchedBackendUserTradingData(userTradingData);
+      console.log("calCashUsed(userTradingData)", calCashUsed(userTradingData))
+      setCashUsed(calCashUsed(userTradingData));
+      setCash(initCash - calCashUsed(userTradingData));
     } catch (error) {
-      console.error('Error:', error);
-  }}
+      console.error('Error fetching backend user trading data:', error);
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -75,6 +70,7 @@ const tradingFunction = () => {
         const name = await AsyncStorage.getItem('username');
         if (name) {
           setUsername(name);
+          fetchBackendUserTradingData(name)
         }
         const storedSymbol = await AsyncStorage.getItem('symbol');
         if (storedSymbol) {
@@ -100,14 +96,15 @@ const tradingFunction = () => {
       }
     };
     init();
+    
     return () => clearInterval(intervalRef.current);
   }, []);
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    fetchData();
+  //   fetchBackendUserTradingData(username);
     
-  }, [confirmTrade]);
+  // }, [confirmTrade]);
 
   useEffect(() => {
     console.log("currentPrice", currentPrice)
@@ -172,20 +169,15 @@ const tradingFunction = () => {
           <TouchableOpacity style={[styles.button, styles.buy, 
             {backgroundColor: action === "buy" ? "#32CD32" : "blue"}]} 
             onPress={() => setAction("buy")}
-            {...(Platform.OS !== 'web' && { accessibilityHint: 'Buy action' })}
-          >
-            <Text style={styles.buttonText}>
-              Buy
-            </Text>
+            {...(Platform.OS !== 'web' && { accessibilityHint: 'Buy action' })}>
+            <Text style={styles.buttonText}>Buy</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.button, styles.sell, 
             {backgroundColor: action === "sell" ? "red" : "blue"}]} 
             onPress={() => setAction("sell")}
             {...(Platform.OS !== 'web' && { accessibilityHint: 'Market order' })}
           >
-            <Text style={styles.buttonText}>
-              Sell
-            </Text>
+            <Text style={styles.buttonText}>Sell</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.buttonContainer}>
@@ -246,23 +238,19 @@ const tradingFunction = () => {
                 (slotSize * limitOrderPrice > cash && order === 'limit')) ?
                 <Text style={[styles.buttonText, {color: "red"}]}>Not enough BP</Text> :
                 <>
-                <Text style={styles.buttonText}>
-                  Confirm the trade: {order} order with slot size {slotSize} at price: 
+                <Text style={[styles.buttonText, {color: "black"}]}>
+                  Confirmation: {order} order with slot size {slotSize} at price: 
                   { order === 'market' ? currentPrice : limitOrderPrice}</Text>
                 <TouchableOpacity style={styles.modalButton} onPress={
                   async () => {
-                    await storageTradingData(symbol, order, action, 
-                      limitOrderPrice, currentPrice, 
-                      slotSize, cash)
+                    await storageTradingData(symbol, order, action, limitOrderPrice, 
+                      currentPrice, slotSize, cash)
                     setConfirmExecution(false);
                     setConfirmTrade((prev) => prev + 1);
-                    postTradesAndOrdersBackend();
-                    // const result = await storageTradingData(symbol, order, action, limitOrderPrice, currentPrice, slotSize, cash);
-
-                    // if (result) {
-                    //   setCash(result.newCash);
-                    //   setCashUsed(result.newCashUsed);
-                    // }
+                    await createTradeAndOrderBackend({
+                      username, time, symbol, order, action, slotSize, 
+                      currentPrice, limitOrderPrice});
+                    await fetchBackendUserTradingData(username);
                   }}>
                   <Text style={styles.buttonText}>Confirm</Text>
                 </TouchableOpacity> 
