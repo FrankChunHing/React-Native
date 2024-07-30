@@ -1,7 +1,15 @@
-export async function deleteTradeAndOrderBackend(username, id){
+export async function deleteTradeAndOrderBackend(input){
     
         try{
-            const res = await fetch(`http://localhost:8000/${username}/trades/delete`,
+            const body = JSON.stringify({
+                "id": input.id, "user_name":input.username, "time":0, 
+                "symbol":input.symbol, "type":input.order,"side":input.action,"size":input.slotSize,
+                "price": input.limitOrderPrice,
+                "isExecuted": false,
+                "isClosed": false
+            })
+            console.log("body", body)
+            const res = await fetch(`http://localhost:8000/${input.username}/trades/delete`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -9,7 +17,11 @@ export async function deleteTradeAndOrderBackend(username, id){
                                 'Content-Type':'application/json'
                     },
                     body: JSON.stringify({
-                        "id": id, 
+                        "id": input.id, "user_name":input.username, "time":0, 
+                        "symbol":input.symbol, "type":input.order,"side":input.action,"size":input.slotSize,
+                        "price": input.limitOrderPrice,
+                        "isExecuted": false,
+                        "isClosed": false
                     })
                 }
             )

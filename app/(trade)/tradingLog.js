@@ -28,6 +28,7 @@ const TradingLog = () => {
   const [getBackend, setGetBackend] = useState(0);
   const [price, setPrice] = useState("");
   const [lotsize, setLotsize] = useState("");
+  const [focusId, setFocusId] = useState(0);
 
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
@@ -85,6 +86,10 @@ const TradingLog = () => {
       color: 'blue',
       fontSize: 18,
   },
+    flatList: {
+      height: 500,
+      // flexGrow: 0
+    },
   });
 
   const fetchUsername = async () => {
@@ -160,6 +165,13 @@ const TradingLog = () => {
     setRefreshing(false);
   };
 
+  function isNumberOrDot(input) {
+    // Define a regular expression to match a number or a dot
+    if (input === ""){return true}
+    const regex = /^[0-9]+\.?[0-9]*$/;
+    // Test the input against the regular expression
+    return regex.test(input);
+}
   const renderItem = ({ item }) => {
     let symbolData = currentPriceData.filter(
       (element) => element.symbol === item.symbol
@@ -168,7 +180,7 @@ const TradingLog = () => {
     let profitLossColor = profitLoss > 0 ? 'green' : profitLoss < 0 ? 'red' : 'black';
 
     return (
-      <View style={styles.tradeContainer} key={item.id}>
+      <ScrollView style={styles.tradeContainer} key={item.id}>
         <Text style={styles.symbolText}>{item.symbol}/USD</Text>
         <Text style={styles.detailText}>
           Order: {item.order} {item.action} size: {item.slotSize}
@@ -177,59 +189,64 @@ const TradingLog = () => {
           {item.order === "market" ? `Market price: ${item.currentPrice}`
             : `Limit order price: ${item.limitOrderPrice}`}
         </Text>
-        <Text style={[styles.detailText, { color: profitLossColor }]}>
+        {item.order === "market" && <Text style={[styles.detailText, { color: profitLossColor }]}>
           P/L: ${profitLoss}
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={() => { setIsAmendOrderBackend(true) }}>
-          <Text style={styles.buttonText}>Amend Order</Text>
-        </TouchableOpacity>
-        { isAmendOrderBackend && 
+        </Text> }
+        {item.order === "limit" && <TouchableOpacity style={styles.button} onPress={() => { 
+          setIsAmendOrderBackend((priv) => !priv)
+          setFocusId(item.id) }}>
+            <Text style={styles.buttonText}>Amend Order</Text>
+        </TouchableOpacity> }
+        { isAmendOrderBackend && item.id === focusId && 
           <View>
             <TextInput
               style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              placeholder="input new limit order price here"
-              keyboardType="decimal"
-              autoComplete="off"
-              required
-            />      
-            <TextInput
-              style={styles.input}
               value={lotsize}
-              onChangeText={setLotsize}
+              onChangeText={(input) => {
+                if (isNumberOrDot(input)){
+                setLotsize(input)}}}
               placeholder="input order new lotsize here"
               keyboardType="decimal"
               autoComplete="off"
               required
             />
+            <TextInput
+              style={styles.input}
+              value={price}
+              onChangeText={(input) => {
+                if (isNumberOrDot(input)){
+                setPrice(input)}}}
+              placeholder="input new limit order price here"
+              keyboardType="decimal"
+              autoComplete="off"
+              required
+            />      
             <Button title="Submit" 
               // onPress={() => handleSubmitAmendOrderBackend(
               //   {...fetchedBackendUserTradingData.filter((element) => element.id == item.id), 
               //     "lotSize": lotsize, "limitOrderPirce": price})} 
               onPress={async () => {
                 console.log("fetchedBackendUserTradingData", fetchedBackendUserTradingData)
-                const amendedOrder = fetchedBackendUserTradingData.map((element) => { if (element.id === item.id) {
-                  console.log("element.id", element.id)
-                   return {...element, "slotSize": Number(lotsize), "limitOrderPrice": Number(price), username}
-              }});
+                const orderToAmend = fetchedBackendUserTradingData.filter((element) =>  element.id === item.id) 
+                const amendedOrder = {...orderToAmend[0], "slotSize": Number(lotsize), "limitOrderPrice": Number(price), username}
               console.log("amendedOrder", amendedOrder)
-              console.log("1")
-              await amendOrderBackend(amendedOrder[0])
+              await amendOrderBackend(amendedOrder)
               console.log("2")
               await fetchBackendUserTradingData(username)
-              console.log("3")
-              console.log("submit amend order: ", amendedOrder[0])}}
+              setIsAmendOrderBackend(false)}}
                   />
           </View>
         }
-        <TouchableOpacity style={styles.button} onPress={ async () => { 
-          await deleteTradeAndOrderBackend(username, item.id);
+        {item.order === "limit" && <TouchableOpacity style={styles.button} onPress={ async () => { 
+          const deleteOrder = fetchedBackendUserTradingData.filter((element) => element.id === item.id)
+          const deleteInput = {username: username, ...deleteOrder[0]}
+          console.log("deleteInput", deleteInput)
+          await deleteTradeAndOrderBackend(deleteInput);
           setGetBackend((prev) => prev + 1);
           }}>
           <Text style={styles.buttonText}>Cancel Order</Text>
-        </TouchableOpacity>
-      </View>
+        </TouchableOpacity> }
+      </ScrollView>
     );
   };
 
@@ -277,6 +294,7 @@ const TradingLog = () => {
         data={fetchedBackendUserTradingData.filter((element) => element.isExecuted)}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        style={styles.flatList}
       />
       <View>
         <Text style={styles.symbolText}>Orders</Text>
@@ -285,6 +303,7 @@ const TradingLog = () => {
         data={fetchedBackendUserTradingData.filter((element) => !element.isExecuted)}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        style={styles.flatList}
       />
       {/* <ScrollView contentContainerStyle={styles.scrollViewContainer}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}

@@ -100,11 +100,11 @@ const tradingFunction = () => {
     return () => clearInterval(intervalRef.current);
   }, []);
 
-  useEffect(() => {
+  // useEffect(() => {
 
-    fetchBackendUserTradingData(username);
+  //   fetchBackendUserTradingData(username);
     
-  }, [confirmTrade]);
+  // }, [confirmTrade]);
 
   useEffect(() => {
     console.log("currentPrice", currentPrice)
@@ -250,6 +250,7 @@ const tradingFunction = () => {
                     await createTradeAndOrderBackend({
                       username, time, symbol, order, action, slotSize, 
                       currentPrice, limitOrderPrice});
+                    await fetchBackendUserTradingData(username);
                   }}>
                   <Text style={styles.buttonText}>Confirm</Text>
                 </TouchableOpacity> 

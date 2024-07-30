@@ -8,6 +8,7 @@ import { Octicons, Feather, MaterialIcons} from '@expo/vector-icons';
 import ModalRender from './modalRender';
 import { fetchPrice } from '../hooks/fetchPrice';
 import * as Linking from 'expo-linking';
+import TradingLog from './tradingLog';
 // import { storePriceData } from '../services/storePriceService';
 
 const Trade = () => {
@@ -133,7 +134,7 @@ function constFetchingPrice(){
                     <Feather name="bell" size={18} color="white" />
                     <Feather name="help-circle" size={18} color="white" />
                     <MaterialIcons name="attach-money" size={19} color="white" 
-                    onPress={() => Linking.openURL('http://localhost:8081/tradingLog')}/>
+                    onPress={() => navigation.navigate('LOG' )}/>
                 </Pressable>
             </SafeAreaView>
             <ModalRender 

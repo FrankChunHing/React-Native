@@ -33,6 +33,9 @@ export default function TradeLayout() {
           title: `${storedSymbol}/USD`, 
         }}
       />
+      <Stack.Screen 
+        name="tradingLog" 
+        options={{ headerShown: false }}/>
     </Stack>
   );
 }
